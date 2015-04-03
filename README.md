@@ -5,3 +5,7 @@ Et surtout je pensais utiliser les vector pour pouvoir direct push les chiffres 
 
 
 A voir.
+
+
+
+PISTE: Liste chainée, j'ai déjà implémenté une structure pour ça. Et ça permet d'ajouter des éléments sans avoir à se soucier de gérer la mémoire dynamiquement ! J'y travaille.
