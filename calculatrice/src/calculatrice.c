@@ -1,6 +1,74 @@
 #include <tizen.h>
 #include "calculatrice.h"
 
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+//---------------------------------------LA LISTE CHAINEE POUR LES OPERATEURS ET CHIFFRES---------------------------------------//
+typedef struct element element;
+struct element
+{
+    char* val;
+    element* nxt;
+};
+
+typedef struct Liste Liste;
+struct Liste
+{
+    element * premier;
+};
+
+Liste * initialisation()
+{
+    Liste *liste = malloc(sizeof(Liste));
+	element* premElem = malloc(sizeof(element));
+
+    if (liste == NULL || premElem == NULL)
+    {
+        exit(EXIT_FAILURE);
+    }
+
+	premElem->val = " ";
+	premElem->nxt = NULL;
+
+	liste->premier = premElem;
+
+    return liste;
+}
+
+void ajouterEnFin(Liste* list, char* valeur)
+{
+    /* On crée un nouvel élément */
+    element* nouvelElement = malloc(sizeof(element));
+
+    /* On assigne la valeur au nouvel élément */
+    nouvelElement->val = valeur;
+
+    /* On ajoute en fin, donc aucun élément ne va suivre */
+    nouvelElement->nxt = NULL;
+
+	if(strcmp(list->premier->val, " ") == 0)
+    {
+        // Si la liste est vide on initialise le premier élément
+    	list->premier = nouvelElement;
+    }
+    else
+    {
+        /* Sinon, on parcourt la liste à l'aide d'un pointeur temporaire et on
+        indique que le dernier élément de la liste est relié au nouvel élément */
+
+    	element* temp = list->premier;
+        while(temp->nxt != NULL) //on parcourt jusqu'au dernier élément
+        {
+            temp = temp->nxt;
+        }
+        //l'élément d'après = nouvelElement
+        temp->nxt = nouvelElement;
+    }
+}
+//------------------------------------------------------------------------------//
+
 typedef struct appdata {
 	Evas_Object *win;
 	Evas_Object *conform;
@@ -8,6 +76,11 @@ typedef struct appdata {
 	Evas_Object *button0, *button1, *button2, *button3, *button4, *button5, *button6, *button7, *button8, *button9;
 	Evas_Object *buttonAdd, *buttonSubs, *buttonDiv, *buttonMult, *buttonResu;
 	Evas_Object *grid;
+
+	int calc; //0 si pas de calcul, 1 si alcul effectué (pour rest l'affichage lors du clique sur un chiffre et pas concaténer au résultat)
+	int res; //pour stocker le résultat à chaque calcul
+	Liste* liste;
+
 } appdata_s;
 
 static void
@@ -45,42 +118,52 @@ clicked_cb(void *data, Evas * e, Evas_Object *obj, void *event_info)
 	if (obj == ad->button0)
 	{
 		toAppend = "0";
+		ajouterEnFin(ad->liste, toAppend);
 	}
 	else if(obj == ad->button1)
 	{
 		toAppend = "1";
+		ajouterEnFin(ad->liste, toAppend);
 	}
 	else if(obj == ad->button2)
 	{
 		toAppend = "2";
+		ajouterEnFin(ad->liste, toAppend);
 	}
 	else if(obj == ad->button3)
 	{
 		toAppend = "3";
+		ajouterEnFin(ad->liste, toAppend);
 	}
 	else if(obj == ad->button4)
 	{
 		toAppend = "4";
+		ajouterEnFin(ad->liste, toAppend);
 	}
 	else if(obj == ad->button5)
 	{
 		toAppend = "5";
+		ajouterEnFin(ad->liste, toAppend);
 	}
 	else if(obj == ad->button6)
 	{
 		toAppend = "6";
+		ajouterEnFin(ad->liste, toAppend);
 	}
 	else if(obj == ad->button7)
 	{
 		toAppend = "7";
+		ajouterEnFin(ad->liste, toAppend);
 	}
 	else if(obj == ad->button8)
 	{
 		toAppend = "8";
+		ajouterEnFin(ad->liste, toAppend);
 	}
 	else if(obj == ad->button9)
 	{
 		toAppend = "9";
+		ajouterEnFin(ad->liste, toAppend);
 	}
 
 	strcat(str, toAppend);
@@ -88,7 +171,8 @@ clicked_cb(void *data, Evas * e, Evas_Object *obj, void *event_info)
 
 	if(obj == ad->buttonAdd)
 	{
-		ope = " + ";
+		ope = "+";
+		ajouterEnFin(ad->liste, ope);
 
 		strcat(str, ope);
 
@@ -100,7 +184,9 @@ clicked_cb(void *data, Evas * e, Evas_Object *obj, void *event_info)
 
 	else if(obj == ad->buttonSubs)
 	{
-		ope = " - ";
+		ope = "-";
+		ajouterEnFin(ad->liste, ope);
+
 		strcat(str, ope);
 
 		strcat(str2, str);
@@ -111,7 +197,9 @@ clicked_cb(void *data, Evas * e, Evas_Object *obj, void *event_info)
 
 	else if(obj == ad->buttonMult)
 	{
-		ope = " x ";
+		ope = "x";
+		ajouterEnFin(ad->liste, ope);
+
 		strcat(str, ope);
 
 		strcat(str2, str);
@@ -122,7 +210,9 @@ clicked_cb(void *data, Evas * e, Evas_Object *obj, void *event_info)
 
 	else if(obj == ad->buttonDiv)
 	{
-		ope = " / ";
+		ope = "/";
+		ajouterEnFin(ad->liste, ope);
+
 		strcat(str, ope);
 
 		strcat(str2, str);
@@ -133,13 +223,75 @@ clicked_cb(void *data, Evas * e, Evas_Object *obj, void *event_info)
 
 	else if(obj == ad->buttonResu)
 	{
+		ad->calc = 1;
 
+		strcat(str2, str);
+		elm_object_text_set(ad->zonecalcul, str2);
+
+	    element * tmp = ad->liste->premier;
+
+	    ad->res = atoi(tmp->val);
+
+	    //tant qu'on est pas au bout de la liste
+	    while(tmp->nxt != NULL)
+	    {
+	    	//on récupère l'élément d'après dans une autre variable temporaire
+	    	element * nextmp;
+
+	    	if(tmp->val == "+")  //si c'est un opérateur (+ par exemple)
+			{
+				//on récupère la valeur de tmp (un chiffre donc)
+				//on récupère la valeur d'après nextmp (autre chiffre) et on les ajoute
+				nextmp = tmp->nxt;
+				if(nextmp != NULL)
+				{
+					ad->res += atoi(nextmp->val);
+				}
+			}
+
+			else if(tmp->val == "-")  //soustraction
+			{
+				nextmp = tmp->nxt;
+				if(nextmp != NULL)
+				{
+					ad->res -= atoi(nextmp->val);
+				}
+			}
+
+			else if(tmp->val == "x")  //multiplication
+			{
+				nextmp = tmp->nxt;
+				if(nextmp != NULL)
+				{
+					ad->res *= atoi(nextmp->val);
+				}
+			}
+
+			else if(tmp->val == "/")  //division
+			{
+				nextmp = tmp->nxt;
+				if(nextmp != NULL)
+				{
+					ad->res /= atoi(nextmp->val);
+				}
+			}
+
+	    	tmp = tmp->nxt;
+		}
+
+	    char buf[256];
+	    sprintf(buf, "%d", ad->res);
+	    elm_object_text_set(ad->zonesaisie, buf);
 	}
 }
 
 static void
 create_base_gui(appdata_s *ad)
 {
+	ad->liste = initialisation();
+	ad->calc = 0;
+    ad->res = 0;
+
 	/* Window */
 	ad->win = elm_win_util_standard_add(PACKAGE, PACKAGE);
 	elm_win_autodel_set(ad->win, EINA_TRUE);
