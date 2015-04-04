@@ -118,32 +118,26 @@ clicked_cb(void *data, Evas * e, Evas_Object *obj, void *event_info)
 	if (obj == ad->button0)
 	{
 		toAppend = "0";
-		ajouterEnFin(ad->liste, toAppend);
 	}
 	else if(obj == ad->button1)
 	{
 		toAppend = "1";
-		ajouterEnFin(ad->liste, toAppend);
 	}
 	else if(obj == ad->button2)
 	{
 		toAppend = "2";
-		ajouterEnFin(ad->liste, toAppend);
 	}
 	else if(obj == ad->button3)
 	{
 		toAppend = "3";
-		ajouterEnFin(ad->liste, toAppend);
 	}
 	else if(obj == ad->button4)
 	{
 		toAppend = "4";
-		ajouterEnFin(ad->liste, toAppend);
 	}
 	else if(obj == ad->button5)
 	{
 		toAppend = "5";
-		ajouterEnFin(ad->liste, toAppend);
 	}
 	else if(obj == ad->button6)
 	{
@@ -153,17 +147,14 @@ clicked_cb(void *data, Evas * e, Evas_Object *obj, void *event_info)
 	else if(obj == ad->button7)
 	{
 		toAppend = "7";
-		ajouterEnFin(ad->liste, toAppend);
 	}
 	else if(obj == ad->button8)
 	{
 		toAppend = "8";
-		ajouterEnFin(ad->liste, toAppend);
 	}
 	else if(obj == ad->button9)
 	{
 		toAppend = "9";
-		ajouterEnFin(ad->liste, toAppend);
 	}
 
 	strcat(str, toAppend);
@@ -171,6 +162,12 @@ clicked_cb(void *data, Evas * e, Evas_Object *obj, void *event_info)
 
 	if(obj == ad->buttonAdd)
 	{
+		const char* temp8 = elm_object_text_get(ad->zonesaisie);
+		char* recup;
+		strcpy(recup, temp8);
+
+		ajouterEnFin(ad->liste, recup);
+
 		ope = "+";
 		ajouterEnFin(ad->liste, ope);
 
@@ -184,6 +181,12 @@ clicked_cb(void *data, Evas * e, Evas_Object *obj, void *event_info)
 
 	else if(obj == ad->buttonSubs)
 	{
+		const char* temp8 = elm_object_text_get(ad->zonesaisie);
+		char* recup;
+		strcpy(recup, temp8);
+
+		ajouterEnFin(ad->liste, recup);
+
 		ope = "-";
 		ajouterEnFin(ad->liste, ope);
 
@@ -197,6 +200,12 @@ clicked_cb(void *data, Evas * e, Evas_Object *obj, void *event_info)
 
 	else if(obj == ad->buttonMult)
 	{
+		const char* temp8 = elm_object_text_get(ad->zonesaisie);
+		char* recup;
+		strcpy(recup, temp8);
+
+		ajouterEnFin(ad->liste, recup);
+
 		ope = "x";
 		ajouterEnFin(ad->liste, ope);
 
@@ -210,6 +219,13 @@ clicked_cb(void *data, Evas * e, Evas_Object *obj, void *event_info)
 
 	else if(obj == ad->buttonDiv)
 	{
+		const char* temp8 = elm_object_text_get(ad->zonesaisie);
+		char* recup;
+
+		strcpy(recup, temp8);
+
+		ajouterEnFin(ad->liste, recup);
+
 		ope = "/";
 		ajouterEnFin(ad->liste, ope);
 
