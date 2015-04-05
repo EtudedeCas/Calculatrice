@@ -1,11 +1,9 @@
 # Calculatrice
 
-Alors du coup c'est pas en C++ mais bien en C. D'où les strcpy etc... J'ai recréé un projet C++ pour voir si j'arrive à faire fonctionner la chose mais pour l'instant j'ai des erreurs d'include et de trucs non reconnus... Work in progress, au pire on continue en C mais je sais pas par rapport à l'architecture MVC si ce sera facile ou pas.
-Et surtout je pensais utiliser les vector pour pouvoir direct push les chiffres et les opérateurs et ensuite avoir simplement à parcourir le vecotr pour faire les calculs mais du coup je sais pas si y a un équivalent en C.... Parce qu'avec un tableau de base ça va être la merde je pense.
+Bon prenez pas la version git ça marche pas^^
+En gros c'est l'ajout à la liste qui fonctionne pas (enfin si ça afonctionne mais ça prend que le premier caractère à chaque fois).
 
+Donc si vous faites: 5*3+2 ça marchera bien (opération avec des chiffres à un seul caractère).
+Mais: 58 + 50 ça marchera pas (normalement ça vous donnera 100).
 
-A voir.
-
-
-
-PISTE: Liste chainée, j'ai déjà implémenté une structure pour ça. Et ça permet d'ajouter des éléments sans avoir à se soucier de gérer la mémoire dynamiquement ! J'y travaille.
+Bref, vu que le Debug sur Tizen ça marche pas du tout du tout ça m'a saoulé. J'y retravaillerai quand je serais moins saoulé.
