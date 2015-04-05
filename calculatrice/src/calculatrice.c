@@ -39,33 +39,33 @@ Liste * initialisation()
 
 void ajouterEnFin(Liste* list, char* valeur)
 {
-    /* On crée un nouvel élément */
-    element* nouvelElement = malloc(sizeof(element));
+	 //on crée un nouvel élément
+	element* nouvelElement = malloc(sizeof(element));
 
-    /* On assigne la valeur au nouvel élément */
-    nouvelElement->val = valeur;
+	//on assigne la valeur au nouvel élément
+	nouvelElement->val = valeur;
 
-    /* On ajoute en fin, donc aucun élément ne va suivre */
-    nouvelElement->nxt = NULL;
+	//on ajoute en fin, donc aucun élément ne va suivre
+	nouvelElement->nxt = NULL;
 
 	if(strcmp(list->premier->val, " ") == 0)
-    {
-        // Si la liste est vide on initialise le premier élément
-    	list->premier = nouvelElement;
-    }
-    else
-    {
-        /* Sinon, on parcourt la liste à l'aide d'un pointeur temporaire et on
-        indique que le dernier élément de la liste est relié au nouvel élément */
+	{
+		//si la liste est vide on initialise le premier élément
+		list->premier = nouvelElement;
+	}
+	else
+	{
+		/*sinon, on parcourt la liste à l'aide d'un pointeur temporaire et on
+		indique que le dernier élément de la liste est relié au nouvel élément */
 
-    	element* temp = list->premier;
-        while(temp->nxt != NULL) //on parcourt jusqu'au dernier élément
-        {
-            temp = temp->nxt;
-        }
-        //l'élément d'après = nouvelElement
-        temp->nxt = nouvelElement;
-    }
+		element* temp = list->premier;
+		while(temp->nxt != NULL) //on parcourt jusqu'au dernier élément
+		{
+			temp = temp->nxt;
+		}
+		//l'élément d'après = nouvelElement
+		temp->nxt = nouvelElement;
+	}
 }
 //------------------------------------------------------------------------------//
 
@@ -74,10 +74,10 @@ typedef struct appdata {
 	Evas_Object *conform;
 	Evas_Object *label, *zonecalcul, *zonesaisie;
 	Evas_Object *button0, *button1, *button2, *button3, *button4, *button5, *button6, *button7, *button8, *button9;
-	Evas_Object *buttonAdd, *buttonSubs, *buttonDiv, *buttonMult, *buttonResu;
+	Evas_Object *buttonAdd, *buttonSubs, *buttonDiv, *buttonMult, *buttonResu, *boutonC, *boutonParOu, *boutonParFerm;
 	Evas_Object *grid;
 
-	int calc; //0 si pas de calcul, 1 si alcul effectué (pour rest l'affichage lors du clique sur un chiffre et pas concaténer au résultat)
+	int calc; //0 si pas de calcul, 1 si calcul effectué (pour rest l'affichage lors du clique sur un chiffre et pas concaténer au résultat)
 	int res; //pour stocker le résultat à chaque calcul
 	Liste* liste;
 
@@ -103,18 +103,19 @@ clicked_cb(void *data, Evas * e, Evas_Object *obj, void *event_info)
 {
 	appdata_s * ad = data;
 
-	const char* temp = elm_object_text_get(ad->zonesaisie);
-	char* str;
+	const char* temp = elm_object_text_get(ad->zonesaisie);  //récupération texte zone saisie
+	char* str;  //texte zone saisie est en const char* donc pour pouvoir le modifier il faut passer par un char *
 
-	const char* temp2 = elm_object_text_get(ad->zonecalcul);
+	const char* temp2 = elm_object_text_get(ad->zonecalcul); //pareil mais pour la zone de calcul
 	char* str2;
 
-	char* toAppend;
-	char* ope;
+	char* toAppend; //chiffre à rajouter
+	char* ope;  //opérateur à rajouter
 
-	strcpy(str, temp);
+	strcpy(str, temp); //récupération du contenu des zones de texte pour pouvoir modifier
 	strcpy(str2, temp2);
 
+	//gestion de toAppend (en fonction du bouton)
 	if (obj == ad->button0)
 	{
 		toAppend = "0";
@@ -142,7 +143,6 @@ clicked_cb(void *data, Evas * e, Evas_Object *obj, void *event_info)
 	else if(obj == ad->button6)
 	{
 		toAppend = "6";
-		ajouterEnFin(ad->liste, toAppend);
 	}
 	else if(obj == ad->button7)
 	{
@@ -157,35 +157,33 @@ clicked_cb(void *data, Evas * e, Evas_Object *obj, void *event_info)
 		toAppend = "9";
 	}
 
+	//concaténation de toAppend (donc le nouveau chiffre) à la zone de saisie
 	strcat(str, toAppend);
 	elm_object_text_set(ad->zonesaisie, str);
 
+	//gestion des opérations
 	if(obj == ad->buttonAdd)
 	{
-		const char* temp8 = elm_object_text_get(ad->zonesaisie);
-		char* recup;
-		strcpy(recup, temp8);
-
-		ajouterEnFin(ad->liste, recup);
+		//on ajoute à la liste le contenu de la zone de saisie
+		ajouterEnFin(ad->liste, str);
 
 		ope = "+";
+		//on ajoute l'opérateur à la liste
 		ajouterEnFin(ad->liste, ope);
 
+		//on concatène la zone de saisie et l'opérateur et le tout on concatène à la zone de calcul
 		strcat(str, ope);
 
 		strcat(str2, str);
 
+		//réinitialisation du contenu de la zone de saisie et de mise à jour de l'affichage de la zone de calcul
 		elm_object_text_set(ad->zonesaisie, "");
 		elm_object_text_set(ad->zonecalcul, str2);
 	}
 
 	else if(obj == ad->buttonSubs)
 	{
-		const char* temp8 = elm_object_text_get(ad->zonesaisie);
-		char* recup;
-		strcpy(recup, temp8);
-
-		ajouterEnFin(ad->liste, recup);
+		ajouterEnFin(ad->liste, str);
 
 		ope = "-";
 		ajouterEnFin(ad->liste, ope);
@@ -200,11 +198,7 @@ clicked_cb(void *data, Evas * e, Evas_Object *obj, void *event_info)
 
 	else if(obj == ad->buttonMult)
 	{
-		const char* temp8 = elm_object_text_get(ad->zonesaisie);
-		char* recup;
-		strcpy(recup, temp8);
-
-		ajouterEnFin(ad->liste, recup);
+		ajouterEnFin(ad->liste, str);
 
 		ope = "x";
 		ajouterEnFin(ad->liste, ope);
@@ -219,12 +213,7 @@ clicked_cb(void *data, Evas * e, Evas_Object *obj, void *event_info)
 
 	else if(obj == ad->buttonDiv)
 	{
-		const char* temp8 = elm_object_text_get(ad->zonesaisie);
-		char* recup;
-
-		strcpy(recup, temp8);
-
-		ajouterEnFin(ad->liste, recup);
+		ajouterEnFin(ad->liste, str);
 
 		ope = "/";
 		ajouterEnFin(ad->liste, ope);
@@ -239,59 +228,34 @@ clicked_cb(void *data, Evas * e, Evas_Object *obj, void *event_info)
 
 	else if(obj == ad->buttonResu)
 	{
-		ad->calc = 1;
+		//on ajoute le dernier élément du calcul à la liste (puisqu'il ne sera ajouté nul part ailleurs)
+		ajouterEnFin(ad->liste, str);
 
+		//on met à jour l'affichage de zone de calcul (pour afficher la fin du calcul)
 		strcat(str2, str);
 		elm_object_text_set(ad->zonecalcul, str2);
 
+		//on récupère le premier élément de la liste
 	    element * tmp = ad->liste->premier;
 
+	    //on initialise res comme étant la valeur du premier élément de la liste
 	    ad->res = atoi(tmp->val);
 
-	    //tant qu'on est pas au bout de la liste
+    	element * nextmp;
+
+	    //on parcours la liste
 	    while(tmp->nxt != NULL)
 	    {
-	    	//on récupère l'élément d'après dans une autre variable temporaire
-	    	element * nextmp;
-
-	    	if(tmp->val == "+")  //si c'est un opérateur (+ par exemple)
+	    	if(strcmp(tmp->val, "+") == 0)  //si c'est un opérateur (+ par exemple)
 			{
 				//on récupère la valeur de tmp (un chiffre donc)
 				//on récupère la valeur d'après nextmp (autre chiffre) et on les ajoute
-				nextmp = tmp->nxt;
+	    		nextmp = tmp->nxt;
 				if(nextmp != NULL)
 				{
 					ad->res += atoi(nextmp->val);
 				}
 			}
-
-			else if(tmp->val == "-")  //soustraction
-			{
-				nextmp = tmp->nxt;
-				if(nextmp != NULL)
-				{
-					ad->res -= atoi(nextmp->val);
-				}
-			}
-
-			else if(tmp->val == "x")  //multiplication
-			{
-				nextmp = tmp->nxt;
-				if(nextmp != NULL)
-				{
-					ad->res *= atoi(nextmp->val);
-				}
-			}
-
-			else if(tmp->val == "/")  //division
-			{
-				nextmp = tmp->nxt;
-				if(nextmp != NULL)
-				{
-					ad->res /= atoi(nextmp->val);
-				}
-			}
-
 	    	tmp = tmp->nxt;
 		}
 
