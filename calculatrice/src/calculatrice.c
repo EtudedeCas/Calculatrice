@@ -42,8 +42,11 @@ void ajouterEnFin(Liste* list, char* valeur)
 	 //on crée un nouvel élément
 	element* nouvelElement = malloc(sizeof(element));
 
+	char * test = malloc(strlen(valeur));
+	strcpy(test, valeur);
+
 	//on assigne la valeur au nouvel élément
-	nouvelElement->val = valeur;
+	nouvelElement->val = test;
 
 	//on ajoute en fin, donc aucun élément ne va suivre
 	nouvelElement->nxt = NULL;
@@ -57,7 +60,6 @@ void ajouterEnFin(Liste* list, char* valeur)
 	{
 		/*sinon, on parcourt la liste à l'aide d'un pointeur temporaire et on
 		indique que le dernier élément de la liste est relié au nouvel élément */
-
 		element* temp = list->premier;
 		while(temp->nxt != NULL) //on parcourt jusqu'au dernier élément
 		{
@@ -74,7 +76,7 @@ typedef struct appdata {
 	Evas_Object *conform;
 	Evas_Object *label, *zonecalcul, *zonesaisie;
 	Evas_Object *button0, *button1, *button2, *button3, *button4, *button5, *button6, *button7, *button8, *button9;
-	Evas_Object *buttonAdd, *buttonSubs, *buttonDiv, *buttonMult, *buttonResu, *boutonC, *boutonParOu, *boutonParFerm;
+	Evas_Object *buttonAdd, *buttonSubs, *buttonDiv, *buttonMult, *buttonResu, *buttonC, *buttonParOu, *buttonParFerm;
 	Evas_Object *grid;
 
 	int calc; //0 si pas de calcul, 1 si calcul effectué (pour rest l'affichage lors du clique sur un chiffre et pas concaténer au résultat)
@@ -102,7 +104,6 @@ static void
 clicked_cb(void *data, Evas * e, Evas_Object *obj, void *event_info)
 {
 	appdata_s * ad = data;
-
 	const char* temp = elm_object_text_get(ad->zonesaisie);  //récupération texte zone saisie
 	char* str;  //texte zone saisie est en const char* donc pour pouvoir le modifier il faut passer par un char *
 
@@ -111,6 +112,21 @@ clicked_cb(void *data, Evas * e, Evas_Object *obj, void *event_info)
 
 	char* toAppend; //chiffre à rajouter
 	char* ope;  //opérateur à rajouter
+
+	if (ad->calc == 1)
+	{
+		elm_object_text_set(ad->zonesaisie, "");
+
+		char buf[256];
+		sprintf(buf, "%d", ad->res);
+
+		elm_object_text_set(ad->zonecalcul, buf);
+
+		ad->liste = initialisation();
+		ajouterEnFin(ad->liste, buf);
+
+		ad->calc = 0;
+	}
 
 	strcpy(str, temp); //récupération du contenu des zones de texte pour pouvoir modifier
 	strcpy(str2, temp2);
@@ -228,6 +244,7 @@ clicked_cb(void *data, Evas * e, Evas_Object *obj, void *event_info)
 
 	else if(obj == ad->buttonResu)
 	{
+		ad->calc = 1;
 		//on ajoute le dernier élément du calcul à la liste (puisqu'il ne sera ajouté nul part ailleurs)
 		ajouterEnFin(ad->liste, str);
 
@@ -256,22 +273,55 @@ clicked_cb(void *data, Evas * e, Evas_Object *obj, void *event_info)
 					ad->res += atoi(nextmp->val);
 				}
 			}
+	    	else if(strcmp(tmp->val, "-") == 0)  //si c'est un opérateur (+ par exemple)
+			{
+				//on récupère la valeur de tmp (un chiffre donc)
+				//on récupère la valeur d'après nextmp (autre chiffre) et on les ajoute
+				nextmp = tmp->nxt;
+				if(nextmp != NULL)
+				{
+					ad->res -= atoi(nextmp->val);
+				}
+			}
+	    	else if(strcmp(tmp->val, "/") == 0)  //si c'est un opérateur (+ par exemple)
+			{
+				//on récupère la valeur de tmp (un chiffre donc)
+				//on récupère la valeur d'après nextmp (autre chiffre) et on les ajoute
+				nextmp = tmp->nxt;
+				if(nextmp != NULL)
+				{
+					ad->res /= atoi(nextmp->val);
+				}
+			}
+	    	else if(strcmp(tmp->val, "x") == 0)  //si c'est un opérateur (+ par exemple)
+			{
+				//on récupère la valeur de tmp (un chiffre donc)
+				//on récupère la valeur d'après nextmp (autre chiffre) et on les ajoute
+				nextmp = tmp->nxt;
+				if(nextmp != NULL)
+				{
+					ad->res *= atoi(nextmp->val);
+				}
+			}
 	    	tmp = tmp->nxt;
 		}
-
 	    char buf[256];
 	    sprintf(buf, "%d", ad->res);
 	    elm_object_text_set(ad->zonesaisie, buf);
+	}
+
+	else if(obj == ad->buttonC)
+	{
+		 elm_object_text_set(ad->zonesaisie, "");
+		 elm_object_text_set(ad->zonecalcul, "");
+		 ad->liste = initialisation();
+		 ad->calc = 0;
 	}
 }
 
 static void
 create_base_gui(appdata_s *ad)
 {
-	ad->liste = initialisation();
-	ad->calc = 0;
-    ad->res = 0;
-
 	/* Window */
 	ad->win = elm_win_util_standard_add(PACKAGE, PACKAGE);
 	elm_win_autodel_set(ad->win, EINA_TRUE);
@@ -332,13 +382,22 @@ create_base_gui(appdata_s *ad)
 	ad->buttonDiv = elm_button_add(ad->conform);
 	ad->buttonMult = elm_button_add(ad->conform);
 	ad->buttonResu = elm_button_add(ad->conform);
+	ad->buttonParOu = elm_button_add(ad->conform);
+	ad->buttonParFerm = elm_button_add(ad->conform);
+	ad->buttonC = elm_button_add(ad->conform);
 
 	elm_object_text_set(ad->buttonAdd, "+");
 	elm_object_text_set(ad->buttonSubs, "-");
 	elm_object_text_set(ad->buttonDiv, "/");
 	elm_object_text_set(ad->buttonMult, "*");
 	elm_object_text_set(ad->buttonResu, "=");
+	elm_object_text_set(ad->buttonC, "C");
+	elm_object_text_set(ad->buttonParOu, "(");
+	elm_object_text_set(ad->buttonParFerm, ")");
 
+	evas_object_size_hint_max_set(ad->buttonC, 40, 40);
+	evas_object_size_hint_max_set(ad->buttonParFerm, 40, 40);
+	evas_object_size_hint_max_set(ad->buttonParOu, 40, 40);
 	evas_object_size_hint_max_set(ad->buttonAdd, 40, 40);
 	evas_object_size_hint_max_set(ad->buttonSubs, 40, 40);
 	evas_object_size_hint_max_set(ad->buttonDiv, 40, 40);
@@ -379,7 +438,10 @@ create_base_gui(appdata_s *ad)
 	elm_grid_pack(ad->grid, ad->buttonSubs, 80, 45, 10, 10);
 	elm_grid_pack(ad->grid, ad->buttonDiv, 65, 60, 10, 10);
 	elm_grid_pack(ad->grid, ad->buttonMult, 80, 60, 10, 10);
-	elm_grid_pack(ad->grid, ad->buttonResu, 80, 75, 10, 10);
+	elm_grid_pack(ad->grid, ad->buttonParOu, 65, 75, 10, 10);
+	elm_grid_pack(ad->grid, ad->buttonParFerm, 80, 75, 10, 10);
+	elm_grid_pack(ad->grid, ad->buttonC, 65, 90, 10, 10);
+	elm_grid_pack(ad->grid, ad->buttonResu, 80, 90, 10, 10);
 	//------------------------//
 
 	//Ajout de la grille au conformant
@@ -398,6 +460,9 @@ create_base_gui(appdata_s *ad)
 	evas_object_show(ad->button8);
 	evas_object_show(ad->button9);
 
+	evas_object_show(ad->buttonC);
+	evas_object_show(ad->buttonParOu);
+	evas_object_show(ad->buttonParFerm);
 	evas_object_show(ad->buttonAdd);
 	evas_object_show(ad->buttonSubs);
 	evas_object_show(ad->buttonDiv);
@@ -423,11 +488,13 @@ create_base_gui(appdata_s *ad)
 	evas_object_event_callback_add(ad->button9,EVAS_CALLBACK_MOUSE_DOWN, clicked_cb, ad);
 
 	evas_object_event_callback_add(ad->buttonAdd,EVAS_CALLBACK_MOUSE_DOWN, clicked_cb, ad);
-	evas_object_event_callback_add(ad->buttonSubs, EVAS_CALLBACK_MOUSE_DOWN, clicked_cb, ad);
+	evas_object_event_callback_add(ad->buttonSubs,EVAS_CALLBACK_MOUSE_DOWN, clicked_cb, ad);
 	evas_object_event_callback_add(ad->buttonMult,EVAS_CALLBACK_MOUSE_DOWN, clicked_cb, ad);
 	evas_object_event_callback_add(ad->buttonDiv,EVAS_CALLBACK_MOUSE_DOWN, clicked_cb, ad);
 	evas_object_event_callback_add(ad->buttonResu,EVAS_CALLBACK_MOUSE_DOWN, clicked_cb, ad);
-	//-------------------//
+	evas_object_event_callback_add(ad->buttonC,EVAS_CALLBACK_MOUSE_DOWN, clicked_cb, ad);
+	evas_object_event_callback_add(ad->buttonParOu,EVAS_CALLBACK_MOUSE_DOWN, clicked_cb, ad);
+	evas_object_event_callback_add(ad->buttonParFerm,EVAS_CALLBACK_MOUSE_DOWN, clicked_cb, ad);
 
 	/* Show window after base gui is set up */
 	evas_object_show(ad->win);
@@ -512,6 +579,10 @@ int
 main(int argc, char *argv[])
 {
 	appdata_s ad = {0,};
+
+	ad.liste = initialisation();
+	ad.calc = 0;
+	ad.res = 0;
 	int ret = 0;
 
 	ui_app_lifecycle_callback_s event_callback = {0,};
