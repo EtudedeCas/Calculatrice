@@ -76,11 +76,12 @@ typedef struct appdata {
 	Evas_Object *conform;
 	Evas_Object *label, *zonecalcul, *zonesaisie;
 	Evas_Object *button0, *button1, *button2, *button3, *button4, *button5, *button6, *button7, *button8, *button9;
-	Evas_Object *buttonAdd, *buttonSubs, *buttonDiv, *buttonMult, *buttonResu, *buttonC, *buttonParOu, *buttonParFerm;
+	Evas_Object *buttonAdd, *buttonSubs, *buttonDiv, *buttonMult, *buttonResu, *buttonC;
 	Evas_Object *grid;
 
 	int calc; //0 si pas de calcul, 1 si calcul effectué (pour rest l'affichage lors du clique sur un chiffre et pas concaténer au résultat)
 	int res; //pour stocker le résultat à chaque calcul
+	int parenth;  //0 si pas de parenth, 1 si parenth (pour savoir quand fermer)
 	Liste* liste;
 
 } appdata_s;
@@ -182,6 +183,11 @@ clicked_cb(void *data, Evas * e, Evas_Object *obj, void *event_info)
 	{
 		//on ajoute à la liste le contenu de la zone de saisie
 		ajouterEnFin(ad->liste, str);
+		if (ad->parenth == 1)
+		{
+			ajouterEnFin(ad->liste, ")");
+			ad->parenth = 0;
+		}
 
 		ope = "+";
 		//on ajoute l'opérateur à la liste
@@ -200,6 +206,11 @@ clicked_cb(void *data, Evas * e, Evas_Object *obj, void *event_info)
 	else if(obj == ad->buttonSubs)
 	{
 		ajouterEnFin(ad->liste, str);
+		if (ad->parenth == 1)
+		{
+			ajouterEnFin(ad->liste, ")");
+			ad->parenth = 0;
+		}
 
 		ope = "-";
 		ajouterEnFin(ad->liste, ope);
@@ -214,6 +225,12 @@ clicked_cb(void *data, Evas * e, Evas_Object *obj, void *event_info)
 
 	else if(obj == ad->buttonMult)
 	{
+		if(ad->parenth != 1)
+		{
+			ajouterEnFin(ad->liste, "(");
+			ad->parenth = 1;
+		}
+
 		ajouterEnFin(ad->liste, str);
 
 		ope = "x";
@@ -229,6 +246,12 @@ clicked_cb(void *data, Evas * e, Evas_Object *obj, void *event_info)
 
 	else if(obj == ad->buttonDiv)
 	{
+		if(ad->parenth != 1)
+		{
+			ajouterEnFin(ad->liste, "(");
+			ad->parenth = 1;
+		}
+
 		ajouterEnFin(ad->liste, str);
 
 		ope = "/";
@@ -244,9 +267,14 @@ clicked_cb(void *data, Evas * e, Evas_Object *obj, void *event_info)
 
 	else if(obj == ad->buttonResu)
 	{
+		ajouterEnFin(ad->liste, str);
+		if (ad->parenth == 1)
+		{
+			ajouterEnFin(ad->liste, ")");
+			ad->parenth = 0;
+		}
 		ad->calc = 1;
 		//on ajoute le dernier élément du calcul à la liste (puisqu'il ne sera ajouté nul part ailleurs)
-		ajouterEnFin(ad->liste, str);
 
 		//on met à jour l'affichage de zone de calcul (pour afficher la fin du calcul)
 		strcat(str2, str);
@@ -255,54 +283,120 @@ clicked_cb(void *data, Evas * e, Evas_Object *obj, void *event_info)
 		//on récupère le premier élément de la liste
 	    element * tmp = ad->liste->premier;
 
-	    //on initialise res comme étant la valeur du premier élément de la liste
-	    ad->res = atoi(tmp->val);
+	    //on initialise res comme étant la valeur du premier élément de la liste sauf si la liste commence par une "("
+	    if (strcmp(tmp->val, "(") != 0)
+	    	ad->res = atoi(tmp->val);
 
     	element * nextmp;
+
+    	int tempo = 0; //pour l'associativité (le résultat temporaire du truc entre parenthèses)
+    	int premierElem = 1; //booléen pour si jamais le premier élément est une parenthèse
+    	int first = 0; //si on a trouvé une parenthèse ouvrante comme 1er élément
+    	int parenthese = 0; //booléen pour adapter le calcul
+    	element * saveOpe;
 
 	    //on parcours la liste
 	    while(tmp->nxt != NULL)
 	    {
+	    	nextmp = tmp->nxt;
 	    	if(strcmp(tmp->val, "+") == 0)  //si c'est un opérateur (+ par exemple)
 			{
 				//on récupère la valeur de tmp (un chiffre donc)
 				//on récupère la valeur d'après nextmp (autre chiffre) et on les ajoute
-	    		nextmp = tmp->nxt;
-				if(nextmp != NULL)
+				if(nextmp != NULL && strcmp(nextmp->val, "(") != 0 && strcmp(nextmp->val, ")") != 0 && parenthese != 1)
 				{
 					ad->res += atoi(nextmp->val);
 				}
+				else if(nextmp != NULL && strcmp(nextmp->val, "(") != 0 && strcmp(nextmp->val, ")") != 0 && parenthese == 1)
+				{
+					tempo += atoi(nextmp->val);
+				}
 			}
-	    	else if(strcmp(tmp->val, "-") == 0)  //si c'est un opérateur (+ par exemple)
+	    	else if(strcmp(tmp->val, "-") == 0)
 			{
-				//on récupère la valeur de tmp (un chiffre donc)
-				//on récupère la valeur d'après nextmp (autre chiffre) et on les ajoute
-				nextmp = tmp->nxt;
-				if(nextmp != NULL)
+				if(nextmp != NULL && strcmp(nextmp->val, "(") != 0 && strcmp(nextmp->val, ")") != 0 && parenthese != 1)
 				{
 					ad->res -= atoi(nextmp->val);
 				}
+				else if(nextmp != NULL && strcmp(nextmp->val, "(") != 0 && strcmp(nextmp->val, ")") != 0 && parenthese == 1)
+				{
+					tempo -= atoi(nextmp->val);
+				}
 			}
-	    	else if(strcmp(tmp->val, "/") == 0)  //si c'est un opérateur (+ par exemple)
+	    	else if(strcmp(tmp->val, "/") == 0)
 			{
-				//on récupère la valeur de tmp (un chiffre donc)
-				//on récupère la valeur d'après nextmp (autre chiffre) et on les ajoute
-				nextmp = tmp->nxt;
-				if(nextmp != NULL)
+				if(nextmp != NULL && strcmp(nextmp->val, "(") != 0 && strcmp(nextmp->val, ")") != 0 && parenthese != 1)
 				{
 					ad->res /= atoi(nextmp->val);
 				}
+				else if(nextmp != NULL && strcmp(nextmp->val, "(") != 0 && strcmp(nextmp->val, ")") != 0 && parenthese == 1)
+				{
+					tempo /= atoi(nextmp->val);
+				}
 			}
-	    	else if(strcmp(tmp->val, "x") == 0)  //si c'est un opérateur (+ par exemple)
+	    	else if(strcmp(tmp->val, "x") == 0)
 			{
-				//on récupère la valeur de tmp (un chiffre donc)
-				//on récupère la valeur d'après nextmp (autre chiffre) et on les ajoute
-				nextmp = tmp->nxt;
-				if(nextmp != NULL)
+				if(nextmp != NULL && strcmp(nextmp->val, "(") != 0 && strcmp(nextmp->val, ")") != 0 && parenthese != 1)
 				{
 					ad->res *= atoi(nextmp->val);
 				}
+				else if(nextmp != NULL && strcmp(nextmp->val, "(") != 0 && strcmp(nextmp->val, ")") != 0 && parenthese == 1)
+				{
+					tempo *= atoi(nextmp->val);
+				}
 			}
+
+	    	if (nextmp != NULL && strcmp(nextmp->val, "(") == 0) //si n'importe quel élément sauf le premier est une parenthèse
+	    	{
+	    		element * nexnextmp = nextmp->nxt;
+	    		tempo = atoi(nexnextmp->val);
+	    		saveOpe = tmp;   //on sauvegarde l'opérateur
+	    		parenthese = 1;
+	    	}
+	    	else if (premierElem == 1 && strcmp(tmp->val,"(") == 0) //si le premier élément de la liste est une parenthèse
+	    	{
+				tempo = atoi(nextmp->val);
+				parenthese = 1;
+				first = 1;
+	    	}
+	    	else if (strcmp(nextmp->val, ")") == 0 && first != 1)
+	    	{
+				parenthese = 0;
+				if (strcmp(saveOpe->val, "+") == 0)
+					ad->res += tempo;
+				else if (strcmp(saveOpe->val, "-") == 0)
+					ad->res -= tempo;
+				else if (strcmp(saveOpe->val, "x") == 0)
+					ad->res *= tempo;
+				else if (strcmp(saveOpe->val, "/") == 0)
+					ad->res /= tempo;
+	    	}
+
+	    	else if (strcmp(nextmp->val, ")") == 0 && first == 1)
+			{
+	    		parenthese = 0;
+	    		first = 0;
+
+	    		element * nexnextmp = nextmp->nxt;
+	    		element * nexnexnextmp = nexnextmp->nxt;
+
+				ad->res = atoi(nexnexnextmp->val);
+
+	    		if (strcmp(nexnextmp->val, "+") == 0)
+					ad->res += tempo;
+				else if (strcmp(nexnextmp->val, "-") == 0)
+					ad->res -= tempo;
+				else if (strcmp(nexnextmp->val, "x") == 0)
+					ad->res *= tempo;
+				else if (strcmp(nexnextmp->val, "/") == 0)
+					ad->res /= tempo;
+
+	    		tmp = nexnextmp;
+			}
+
+	    	if(premierElem == 1)
+	    		premierElem = 0;
+
 	    	tmp = tmp->nxt;
 		}
 	    char buf[256];
@@ -382,8 +476,6 @@ create_base_gui(appdata_s *ad)
 	ad->buttonDiv = elm_button_add(ad->conform);
 	ad->buttonMult = elm_button_add(ad->conform);
 	ad->buttonResu = elm_button_add(ad->conform);
-	ad->buttonParOu = elm_button_add(ad->conform);
-	ad->buttonParFerm = elm_button_add(ad->conform);
 	ad->buttonC = elm_button_add(ad->conform);
 
 	elm_object_text_set(ad->buttonAdd, "+");
@@ -392,12 +484,8 @@ create_base_gui(appdata_s *ad)
 	elm_object_text_set(ad->buttonMult, "*");
 	elm_object_text_set(ad->buttonResu, "=");
 	elm_object_text_set(ad->buttonC, "C");
-	elm_object_text_set(ad->buttonParOu, "(");
-	elm_object_text_set(ad->buttonParFerm, ")");
 
 	evas_object_size_hint_max_set(ad->buttonC, 40, 40);
-	evas_object_size_hint_max_set(ad->buttonParFerm, 40, 40);
-	evas_object_size_hint_max_set(ad->buttonParOu, 40, 40);
 	evas_object_size_hint_max_set(ad->buttonAdd, 40, 40);
 	evas_object_size_hint_max_set(ad->buttonSubs, 40, 40);
 	evas_object_size_hint_max_set(ad->buttonDiv, 40, 40);
@@ -438,8 +526,6 @@ create_base_gui(appdata_s *ad)
 	elm_grid_pack(ad->grid, ad->buttonSubs, 80, 45, 10, 10);
 	elm_grid_pack(ad->grid, ad->buttonDiv, 65, 60, 10, 10);
 	elm_grid_pack(ad->grid, ad->buttonMult, 80, 60, 10, 10);
-	elm_grid_pack(ad->grid, ad->buttonParOu, 65, 75, 10, 10);
-	elm_grid_pack(ad->grid, ad->buttonParFerm, 80, 75, 10, 10);
 	elm_grid_pack(ad->grid, ad->buttonC, 65, 90, 10, 10);
 	elm_grid_pack(ad->grid, ad->buttonResu, 80, 90, 10, 10);
 	//------------------------//
@@ -461,8 +547,6 @@ create_base_gui(appdata_s *ad)
 	evas_object_show(ad->button9);
 
 	evas_object_show(ad->buttonC);
-	evas_object_show(ad->buttonParOu);
-	evas_object_show(ad->buttonParFerm);
 	evas_object_show(ad->buttonAdd);
 	evas_object_show(ad->buttonSubs);
 	evas_object_show(ad->buttonDiv);
@@ -493,8 +577,6 @@ create_base_gui(appdata_s *ad)
 	evas_object_event_callback_add(ad->buttonDiv,EVAS_CALLBACK_MOUSE_DOWN, clicked_cb, ad);
 	evas_object_event_callback_add(ad->buttonResu,EVAS_CALLBACK_MOUSE_DOWN, clicked_cb, ad);
 	evas_object_event_callback_add(ad->buttonC,EVAS_CALLBACK_MOUSE_DOWN, clicked_cb, ad);
-	evas_object_event_callback_add(ad->buttonParOu,EVAS_CALLBACK_MOUSE_DOWN, clicked_cb, ad);
-	evas_object_event_callback_add(ad->buttonParFerm,EVAS_CALLBACK_MOUSE_DOWN, clicked_cb, ad);
 
 	/* Show window after base gui is set up */
 	evas_object_show(ad->win);
