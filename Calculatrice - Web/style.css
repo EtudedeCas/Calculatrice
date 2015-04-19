@@ -1,0 +1,75 @@
+@font-face {
+    font-family: LCD;
+    src: url("font.ttf");
+}
+
+.ligne, .ligne0, .ligne1, .ligne2, .ligne3, .ligne4
+{
+	display: inline-block;
+}
+
+div
+{
+	width: 130px;
+	height: 50px;
+	text-align: center;
+	border: 1px solid white;
+	background-color: #FFA000;
+	color: white;
+}
+
+div:hover
+{
+	background-color: #DB071A;
+	cursor: pointer;
+}
+
+.resultat
+{
+	font-family: LCD;
+	width: 394px;
+	height: 75px;
+	background-color: white;
+	color: black;
+	border: 1px solid black;
+	border-radius: 10px;
+}
+
+.resultat:hover
+{
+	background-color: white;
+	color: black;
+}
+
+#actuel 
+{
+	position: relative;
+	margin-top: 4%;
+	float: right;
+	margin-right: 48%;
+}
+
+#oper
+{
+	float: left;
+	position: relative;
+	margin-left: 2%;
+}
+
+#egal
+{
+	background-color: #4F99E2;
+}
+
+#reset
+{
+	background-color: #96E24F;
+}
+
+#delete
+{
+	width: 32px;
+	height: 32px;
+	margin-left: 2%;
+	margin-top: 4%;
+}
