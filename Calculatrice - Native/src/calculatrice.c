@@ -105,6 +105,7 @@ static void
 clicked_cb(void *data, Evas * e, Evas_Object *obj, void *event_info)
 {
 	appdata_s * ad = data;
+
 	const char* temp = elm_object_text_get(ad->zonesaisie);  //récupération texte zone saisie
 	char* str;  //texte zone saisie est en const char* donc pour pouvoir le modifier il faut passer par un char *
 
@@ -116,15 +117,14 @@ clicked_cb(void *data, Evas * e, Evas_Object *obj, void *event_info)
 
 	if (ad->calc == 1)
 	{
-		elm_object_text_set(ad->zonesaisie, "");
+		elm_object_text_set(ad->zonecalcul, "");
 
-		char buf[256];
-		sprintf(buf, "%d", ad->res);
-
-		elm_object_text_set(ad->zonecalcul, buf);
+		temp2 = "";
+	    char tst[256];
+	    sprintf(tst, "%d", ad->res);
 
 		ad->liste = initialisation();
-		ajouterEnFin(ad->liste, buf);
+		ajouterEnFin(ad->liste, tst);
 
 		ad->calc = 0;
 	}
@@ -301,8 +301,6 @@ clicked_cb(void *data, Evas * e, Evas_Object *obj, void *event_info)
 	    	nextmp = tmp->nxt;
 	    	if(strcmp(tmp->val, "+") == 0)  //si c'est un opérateur (+ par exemple)
 			{
-				//on récupère la valeur de tmp (un chiffre donc)
-				//on récupère la valeur d'après nextmp (autre chiffre) et on les ajoute
 				if(nextmp != NULL && strcmp(nextmp->val, "(") != 0 && strcmp(nextmp->val, ")") != 0 && parenthese != 1)
 				{
 					ad->res += atoi(nextmp->val);
@@ -362,6 +360,9 @@ clicked_cb(void *data, Evas * e, Evas_Object *obj, void *event_info)
 	    	else if (strcmp(nextmp->val, ")") == 0 && first != 1)
 	    	{
 				parenthese = 0;
+
+				element * nexnextmp = nextmp->nxt;
+
 				if (strcmp(saveOpe->val, "+") == 0)
 					ad->res += tempo;
 				else if (strcmp(saveOpe->val, "-") == 0)
@@ -377,21 +378,25 @@ clicked_cb(void *data, Evas * e, Evas_Object *obj, void *event_info)
 	    		parenthese = 0;
 	    		first = 0;
 
-	    		element * nexnextmp = nextmp->nxt;
-	    		element * nexnexnextmp = nexnextmp->nxt;
+	    		if(nextmp->nxt == NULL)  //si on a juste une multiplication
+					ad->res = tempo;
 
-				ad->res = atoi(nexnexnextmp->val);
+				else
+				{
+					element * nexnextmp = nextmp->nxt;
+					element * nexnexnextmp = nexnextmp->nxt;
+					ad->res = atoi(nexnexnextmp->val);
+					if (strcmp(nexnextmp->val, "+") == 0)
+						ad->res += tempo;
+					else if (strcmp(nexnextmp->val, "-") == 0)
+						ad->res -= tempo;
+					else if (strcmp(nexnextmp->val, "x") == 0)
+						ad->res *= tempo;
+					else if (strcmp(nexnextmp->val, "/") == 0)
+						ad->res /= tempo;
 
-	    		if (strcmp(nexnextmp->val, "+") == 0)
-					ad->res += tempo;
-				else if (strcmp(nexnextmp->val, "-") == 0)
-					ad->res -= tempo;
-				else if (strcmp(nexnextmp->val, "x") == 0)
-					ad->res *= tempo;
-				else if (strcmp(nexnextmp->val, "/") == 0)
-					ad->res /= tempo;
-
-	    		tmp = nexnextmp;
+					tmp = nexnextmp;
+				}
 			}
 
 	    	if(premierElem == 1)
@@ -416,6 +421,10 @@ clicked_cb(void *data, Evas * e, Evas_Object *obj, void *event_info)
 static void
 create_base_gui(appdata_s *ad)
 {
+	ad->liste = initialisation();
+	ad->calc = 0;
+	ad->res = 0;
+
 	/* Window */
 	ad->win = elm_win_util_standard_add(PACKAGE, PACKAGE);
 	elm_win_autodel_set(ad->win, EINA_TRUE);
@@ -526,8 +535,8 @@ create_base_gui(appdata_s *ad)
 	elm_grid_pack(ad->grid, ad->buttonSubs, 80, 45, 10, 10);
 	elm_grid_pack(ad->grid, ad->buttonDiv, 65, 60, 10, 10);
 	elm_grid_pack(ad->grid, ad->buttonMult, 80, 60, 10, 10);
-	elm_grid_pack(ad->grid, ad->buttonC, 65, 90, 10, 10);
-	elm_grid_pack(ad->grid, ad->buttonResu, 80, 90, 10, 10);
+	elm_grid_pack(ad->grid, ad->buttonC, 65, 75, 10, 10);
+	elm_grid_pack(ad->grid, ad->buttonResu, 80, 75, 10, 10);
 	//------------------------//
 
 	//Ajout de la grille au conformant
@@ -662,9 +671,6 @@ main(int argc, char *argv[])
 {
 	appdata_s ad = {0,};
 
-	ad.liste = initialisation();
-	ad.calc = 0;
-	ad.res = 0;
 	int ret = 0;
 
 	ui_app_lifecycle_callback_s event_callback = {0,};
