@@ -126,7 +126,7 @@
 			
 			$('#oper').append(a + "=");
 			
-			var resultat = liste[0];
+			var resultat = Number(liste[0]);
 			var i;
 			for (i = 0; i < liste.length; i++)
 			{
@@ -149,8 +149,10 @@
 					
 				}
 			}
+			
 			//on réinitialise la liste, le calcul est fini, et on affiche le résultat
 			liste = [];
+			
 			$('#actuel').text(resultat);
 		});
 		//------------------------------------------
